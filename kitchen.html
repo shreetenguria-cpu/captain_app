@@ -1,0 +1,19 @@
+<h1>🍳 Kitchen Screen</h1>
+<div id="orders"></div>
+
+<script>
+const WEB = "https://script.google.com/macros/s/AKfycbxk1gbwwKDsXcPvDMRJJRuDH6lJhI4tlF2gY5qfSRmCk3eDZ16gn-V-pZLgcDvUWdqMkg/exec";
+
+async function load(){
+  const r = await fetch(WEB + "?action=orders");
+  const data = await r.json();
+  const el = document.getElementById("orders");
+  el.innerHTML = data.map(o=>`
+    <div style="background:white;padding:10px;margin:8px;border-radius:10px">
+      <strong>Table ${o.table}</strong><br>
+      ${o.items.map(i=>`${i.qty} x ${i.name}`).join("<br>")}
+    </div>
+  `).join("");
+}
+setInterval(load, 2000);
+</script>
