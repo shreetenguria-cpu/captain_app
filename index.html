@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body { font-family: system-ui; margin:0; background:#f4f6f8; }
+    header {
+      background:#0f172a; color:white; padding:12px;
+      display:flex; gap:10px; align-items:center;
+      position:sticky; top:0;
+    }
+    header select { font-size:18px; padding:6px; }
+    h1 { font-size:18px; margin:0; flex:1; }
+
+    .container { display:flex; height:calc(100vh - 60px); }
+    .menu { flex:2; padding:12px; overflow:auto; }
+    .cart { flex:1; background:white; padding:12px; border-left:1px solid #ddd; display:flex; flex-direction:column; }
+
+    .item { background:white; padding:12px; margin-bottom:8px; border-radius:10px; box-shadow:0 2px 4px rgba(0,0,0,.05); display:flex; justify-content:space-between; align-items:center; }
+    .item button { font-size:18px; padding:6px 12px; border-radius:8px; border:none; background:#22c55e; color:white; }
+
+    .cart h2 { margin:0 0 10px 0; }
+    .cart-item { display:flex; justify-content:space-between; margin-bottom:6px; }
+
+    .actions button {
+      font-size:18px; padding:12px; margin-top:8px;
+      border:none; border-radius:10px;
+    }
+    .send { background:#2563eb; color:white; }
+    .update { background:#f59e0b; color:white; }
+    .cancel { background:#ef4444; color:white; }
+
+    input[type=number] { width:60px; font-size:16px; }
+  </style>
+</head>
+
+<body>
+<header>
+  <input id="pin" placeholder="Enter PIN" type="password">
+  <button onclick="login()">Login</button>
+</header>
+
+<script>
+const VALID_PIN = "1234";
+function login(){
+  if(pin.value !== VALID_PIN) return alert("Wrong PIN");
+  document.body.classList.add("logged");
+}
+</script>
+
+<header>
+  <h1>Captain Order</h1>
+  <label>Table</label>
+  <select id="table">
+    <option>T1</option><option>T2</option><option>T3</option><option>Packing</option>
+  </select>
+</header>
+
+<div class="container">
+  <div class="menu" id="menu"></div>
+
+  <div class="cart">
+    <h2>Current Order</h2>
+    <div id="cartList"></div>
+
+    <div class="actions">
+      <button class="send" onclick="send('new')">Send Order</button>
+      <button class="update" onclick="send('update')">Update Order</button>
+      <button class="cancel" onclick="send('cancel')">Cancel Order</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const WEB_APP = "https://script.google.com/macros/s/AKfycbxk1gbwwKDsXcPvDMRJJRuDH6lJhI4tlF2gY5qfSRmCk3eDZ16gn-V-pZLgcDvUWdqMkg/exec";
+let menuItems = [];
+let order = [];
+
+fetch(WEB_APP + "?action=menu").then(r=>r.json()).then(d=>{
+  menuItems = d;
+  renderMenu();
+});
+
+function renderMenu(){
+  const m = document.getElementById("menu");
+  m.innerHTML = "";
+  menuItems.forEach(i=>{
+    const div = document.createElement("div");
+    div.className="item";
+    div.innerHTML = `
+      <div>
+        <strong>${i.item_name}</strong><br>
+        ₹${i.price || ""}
+      </div>
+      <div>
+        <input type="number" min="1" value="1" id="q${i.id}">
+        <button onclick="add('${i.id}','${i.item_name}')">+</button>
+      </div>`;
+    m.appendChild(div);
+  });
+}
+
+function add(id,name){
+  const q = document.getElementById("q"+id).value;
+  const existing = order.find(i=>i.id===id);
+  if(existing) existing.qty = parseInt(existing.qty) + parseInt(q);
+  else order.push({id,name,qty:q});
+  renderCart();
+}
+
+function renderCart(){
+  const c = document.getElementById("cartList");
+  c.innerHTML="";
+  order.forEach((i,idx)=>{
+    const d = document.createElement("div");
+    d.className="cart-item";
+    d.innerHTML = `${i.qty} x ${i.name} <button onclick="del(${idx})">❌</button>`;
+    c.appendChild(d);
+  });
+}
+
+function del(i){ order.splice(i,1); renderCart(); }
+
+function send(action){
+  fetch(WEB_APP,{
+    method:"POST",
+    body:JSON.stringify({
+      action,
+      table:document.getElementById("table").value,
+      items:order
+    })
+  });
+  if(action==="new") order=[];
+  renderCart();
+  alert("Sent to kitchen");
+}
+</script>
+
+</body>
+</html>
