@@ -124,10 +124,11 @@ function del(i){ order.splice(i,1); renderCart(); }
 function send(action){
   fetch(WEB_APP,{
     method:"POST",
-    body:JSON.stringify({
-      action,
-      table:document.getElementById("table").value,
-      items:order
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      action: action,
+      table: document.getElementById("table").value,
+      items: order
     })
   });
   if(action==="new") order=[];
